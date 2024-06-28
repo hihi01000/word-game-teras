@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERAS 4글자 단어 게임</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .game-container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .letters {
+            margin-bottom: 20px;
+        }
+        .letter {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            margin: 0 5px;
+            font-size: 24px;
+            line-height: 40px;
+            text-align: center;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #word-input {
+            font-size: 18px;
+            padding: 5px;
+            width: 200px;
+        }
+        #submit-btn {
+            font-size: 18px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        #score {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+        #timer {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #words-found {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        #total-words {
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>TERAS 4글자 단어 게임</h1>
+        <div id="timer">60초</div>
+        <div class="letters">
+            <span class="letter">T</span>
+            <span class="letter">E</span>
+            <span class="letter">R</span>
+            <span class="letter">A</span>
+            <span class="letter">S</span>
+        </div>
+        <input type="text" id="word-input" placeholder="4글자 단어 입력..." maxlength="4">
+        <button id="submit-btn">제출</button>
+        <div id="message"></div>
+        <div id="score">점수: 0</div>
+        <div id="words-found">
+            <h3>찾은 단어:</h3>
+        </div>
+        <div id="total-words"></div>
+    </div>
+
+    <script>
+        const wordInput = document.getElementById('word-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const message = document.getElementById('message');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const wordsFoundDisplay = document.getElementById('words-found');
+        const totalWordsDisplay = document.getElementById('total-words');
+        const letters = ['T', 'E', 'R', 'A', 'S'];
+        let score = 0;
+        let timeLeft = 60;
+        let wordsFound = [];
+
+        const validWords = ['STAR', 'TEAR', 'RATE', 'SEAT', 'TEAS', 'TARS', 'ARTS', 'RATS', 'ARES', 'EARS', 'REST', 'EAST', 'AREA', 'ATES', 'SATE', 'SERA', 'TARE', 'TASE', 'TEAS', 'TSAR'];
+
+        totalWordsDisplay.textContent = `총 ${validWords.length}개의 단어를 찾아보세요!`;
+
+        function updateTimer() {
+            timeLeft--;
+            timerDisplay.textContent = `${timeLeft}초`;
+            if (timeLeft === 0) {
+                endGame();
+            }
+        }
+
+        let timer = setInterval(updateTimer, 1000);
+
+        function endGame() {
+            clearInterval(timer);
+            wordInput.disabled = true;
+            submitBtn.disabled = true;
+            message.textContent = `게임 종료! 최종 점수: ${score}`;
+            message.style.color = 'blue';
+            const remainingWords = validWords.filter(word => !wordsFound.includes(word));
+            if (remainingWords.length > 0) {
+                totalWordsDisplay.textContent = `찾지 못한 단어: ${remainingWords.join(', ')}`;
+            } else {
+                totalWordsDisplay.textContent = '축하합니다! 모든 단어를 찾았습니다!';
+            }
+        }
+
+        submitBtn.addEventListener('click', checkWord);
+        wordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkWord();
+            }
+        });
+
+        function checkWord() {
+            const word = wordInput.value.toUpperCase();
+            if (word.length !== 4) {
+                message.textContent = '4글자 단어만 입력 가능합니다.';
+                message.style.color = 'red';
+            } else if (isValidWord(word)) {
+                if (validWords.includes(word)) {
+                    if (wordsFound.includes(word)) {
+                        message.textContent = `이미 찾은 단어입니다: "${word}"`;
+                        message.style.color = 'orange';
+                    } else {
+                        score += 4;
+                        scoreDisplay.textContent = `점수: ${score}`;
+                        message.textContent = `정답! "${word}"는 유효한 단어입니다.`;
+                        message.style.color = 'green';
+                        wordsFound.push(word);
+                        updateWordsFound();
+                    }
+                } else {
+                    message.textContent = `"${word}"는 사전에 없는 단어입니다.`;
+                    message.style.color = 'red';
+                }
+            } else {
+                message.textContent = '주어진 글자만 사용해야 합니다.';
+                message.style.color = 'red';
+            }
+            wordInput.value = '';
+        }
+
+        function isValidWord(word) {
+            const letterCount = {};
+            letters.forEach(letter => letterCount[letter] = 1);
+            
+            for (let char of word) {
+                if (!letterCount[char]) return false;
+                letterCount[char]--;
+            }
+            return true;
+        }
+
+        function updateWordsFound() {
+            wordsFoundDisplay.innerHTML = '<h3>찾은 단어:</h3>' + wordsFound.join(', ');
+            totalWordsDisplay.textContent = `${wordsFound.length}/${validWords.length} 단어 찾음`;
+        }
+
+        document.querySelectorAll('.letter').forEach(letterElement => {
+            letterElement.addEventListener('click', () => {
+                if (wordInput.value.length < 4) {
+                    wordInput.value += letterElement.textContent;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
